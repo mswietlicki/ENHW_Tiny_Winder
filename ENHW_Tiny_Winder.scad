@@ -1,21 +1,27 @@
 $fs = $preview ? 1 : 0.2;
 $fa = $preview ? 3 : 0.2;
 
-$labels = [ "40m", "EFHW" ];
+$zero = $preview ? 0.01 : 0.0;
+
+render_part = "all"; // all, side_a, side_b, middle_disc
+
+$labels = [[ "SP5", "MSR" ], [ "40m", "EFHW" ]];
+
 
 // Outer oval dimensions
-$winder_wid = 108;
-$winder_len = 68;
+$winder_wid = 100;
+$winder_len = 76;
 $winder_hei = 2.0;
 $winder_margin = 4;
 $winder_hole_r = 8;
+$winder_hole_a = 45;
 
 // Inner rounded box dimensions
 $box_wid = 50;
 $box_len = 30;
 $box_hei_a = 12;
-$box_hei_b = 17;
-$box_hei_join = 5 + $winder_hei;
+$box_hei_b = 18;
+$box_hei_join = $box_hei_b / 2.5 + $winder_hei;
 
 //
 wall_thick = 3;
@@ -26,15 +32,21 @@ pin_r = 1.8 / 2;
 pillar_r = 9.6 / 2;
 tolerance = 0.1;
 
+
 // Main body
 
-side_a();
-
-translate([ 0, 0, $box_hei_a + $winder_hei ]) 
-middle_disc();
-
-translate([ 0, 0, $box_hei_a + $box_hei_b + $winder_hei * 2 ]) rotate([ 0, 180, 0 ]) 
-side_b();
+if (render_part == "all")
+{
+    side_a();
+    translate([ 0, 0, $box_hei_a + $winder_hei ]) middle_disc();
+    translate([ 0, 0, $box_hei_a + $box_hei_b + $winder_hei * 2 ]) rotate([ 0, 180, 0 ]) side_b();
+}
+else if (render_part == "side_a")
+    side_a();
+else if (render_part == "side_b")
+    side_b();
+else if (render_part == "middle_disc")
+    middle_disc();
 
 //-------------------------
 // Modules
@@ -45,7 +57,7 @@ module side_a()
     {
         union()
         {
-            disc($winder_wid, $winder_len, $winder_hei, $winder_hole_r, $winder_margin, $labels);
+            disc($winder_wid, $winder_len, $winder_hei, $winder_hole_r, $winder_margin, $labels[0]);
 
             translate([ 0, 0, $winder_hei / 2 ]) union()
             {
@@ -57,13 +69,16 @@ module side_a()
                         translate([ 0, 0, $box_hei_a / 2 ]) rcube2(Size = [ $box_wid, $box_len, $box_hei_a ], b = 10);
 
                         // Rounded box top
-                        translate([ 0, 0, $box_hei_a + $box_hei_join / 2 ])
-                            rcube2(Size = [ $box_wid - wall_thick - tolerance, $box_len - wall_thick - tolerance, $box_hei_join ], b = 10);
+                        translate([ 0, 0, $box_hei_a + $box_hei_join / 2 ]) rcube2(
+                            Size =
+                                [ $box_wid - wall_thick - tolerance, $box_len - wall_thick - tolerance, $box_hei_join ],
+                            b = 10);
                     }
 
                     // Cut out the hole for the toroid
-                    translate([ 0, 0, $box_hei_a / 2 + $box_hei_join / 2 + 1 ])
-                        rcube2(Size = [ $box_wid - wall_thick * 2, $box_len - wall_thick * 2, $box_hei_a + $box_hei_join + 2 ], b = 10);
+                    translate([ 0, 0, $box_hei_a / 2 + $box_hei_join / 2 + 1 ]) rcube2(
+                        Size = [ $box_wid - wall_thick * 2, $box_len - wall_thick * 2, $box_hei_a + $box_hei_join + 2 ],
+                        b = 10);
 
                     // Cut out the hole for RG-174 coax
                     translate([ -$box_wid / 8, $box_len / 2, coax_r ]) rotate([ -43, 90, 0 ])
@@ -83,8 +98,8 @@ module side_a()
                 // Pilar for the toroid
                 union()
                 {
-                    translate([ 0, 0, ($box_hei_a + $box_hei_b + $winder_hei) / 2 ]) cylinder(
-                        h = $box_hei_a + $box_hei_b + $winder_hei, r1 = pillar_r, r2 = pillar_r, center = true);
+                    translate([ 0, 0, 0]) cylinder(
+                        h = $box_hei_a + $box_hei_b + $winder_hei - $winder_hei - tolerance, r1 = pillar_r, r2 = pillar_r);
                     translate([ 0, 0, coax_r ]) cylinder(h = coax_r * 2, r1 = 16 / 2, r2 = 16 / 2, center = true);
                 }
             }
@@ -113,7 +128,7 @@ module side_b()
     {
         union()
         {
-            disc($winder_wid, $winder_len, $winder_hei, $winder_hole_r, $winder_margin, $labels);
+            disc($winder_wid, $winder_len, $winder_hei, $winder_hole_r, $winder_margin, $labels[1]);
 
             translate([ 0, 0, $winder_hei / 2 ]) union()
             {
@@ -123,8 +138,8 @@ module side_b()
                     translate([ 0, 0, $box_hei_b / 2 ]) rcube2(Size = [ $box_wid, $box_len, $box_hei_b ], b = 10);
 
                     // Cut out the hole for the toroid
-                    translate([ 0, 0, $box_hei_b / 2 + $box_hei_join / 2 + 1 ])
-                        rcube2(Size = [ $box_wid - wall_thick, $box_len - wall_thick, $box_hei_b + 2 ], b = 10);
+                    translate([ 0, 0, $box_hei_b / 2 ])
+                        rcube2(Size = [ $box_wid - wall_thick, $box_len - wall_thick, $box_hei_b + $zero ], b = 10);
 
                     // Cut out the hole for locking pins
                     translate([ 0, 0, $box_hei_b - $box_hei_join / 2 + $winder_hei / 2 ]) rotate([ 0, 90, 0 ])
@@ -138,9 +153,8 @@ module side_b()
                 }
                 difference()
                 {
-                    cylinder(h = $box_hei_join, r1 = pillar_r + 2, r2 = pillar_r + 2);
-                    translate([ 0, 0, 1 ])
-                    cylinder(h = $box_hei_join, r1 = pillar_r, r2 = pillar_r);
+                    cylinder(h = $box_hei_join, r1 = pillar_r + wall_thick, r2 = pillar_r + wall_thick);
+                    translate([ 0, 0, $winder_hei ]) cylinder(h = $box_hei_join, r1 = pillar_r + tolerance, r2 = pillar_r + tolerance);
                 }
             }
         }
@@ -161,7 +175,7 @@ module disc(w, l, h, wr, m, labels)
 
         for (i = [ -1, 1 ])
         {
-            for (j = [ -52, 0, 52 ])
+            for (j = [ -$winder_hole_a, 0, $winder_hole_a ])
                 translate([ i * (wd / 2), 0, 0 ]) rotate(j) translate([ i * (l / 2 - wr - m), 0, 0 ])
                     cylinder(h = h, r1 = wr, r2 = wr, center = true);
         }
